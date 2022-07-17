@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js"
+    "start": "node index.js",
+    "dev": "nodemon index.js"
   },
   "repository": {
     "type": "git",
@@ -18,7 +19,11 @@
   },
   "homepage": "https://github.com/Rakibca/social-network-api#readme",
   "dependencies": {
+    "dotenv": "^16.0.1",
     "express": "^4.18.1",
     "mongoose": "^6.4.4"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.19"
   }
 }
