@@ -1,3 +1,4 @@
+const moment = require("moment");
 const {
   Schema,
   model
@@ -14,7 +15,7 @@ const thoughtSchema = new Schema({
   createdAt: {
     type: Date,
     default: Date.now(),
-    get: time => dateFormat(time)
+    get: (time) => moment(time).format('MMMM Do YYYY, h:mm:ss a'),
   },
   username: {
     type: String,
@@ -28,10 +29,7 @@ const thoughtSchema = new Schema({
   id: false
 });
 
-// Create a virtual property called `reactionCount`
-thoughtSchema.virtual('reactionCount').get(function() {
-  return this.reactions.length;
-});
+
 
 
 const reactionSchema = new Schema({
@@ -52,17 +50,26 @@ const reactionSchema = new Schema({
   },
   createdAt: {
     type: Date,
-    default: Date.now,
-    get: time => dateFormat(time)
+    default: Date.now(),
+    get: (time) => moment(time).format('MMMM Do YYYY, h:mm:ss a'),
   }
+}, {
+  toJSON: {
+    virtuals: true
+  },
+  id: false
+});
+
+
+
+// Create a virtual property called `reactionCount`
+thoughtSchema.virtual('reactionCount').get(function () {
+  return this.reactions.length;
 });
 
 
 // Initialize our Thought model
 const Thought = model('Thought', thoughtSchema);
-const Reaction = model('Reaction', reactionSchema);
 
-module.exports = {
-  Thought,
-  Reaction
-};
+
+module.exports = Thought;
