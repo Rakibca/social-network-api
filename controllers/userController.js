@@ -42,27 +42,40 @@ const userController = {
 
 
   updateUser(req, res) {
-    User.findOneAndUpdate({
-        _id: req.params.id
-      }, req.body, {
-        new: true
+    User.findOne({
+        _id: req.params.userId
       })
-      .then((user) => {
-        if (!user) {
-          res.status(404).json({
-            message: "No user exits!",
-          });
-        } else {
-          res.status(200).json({
-            message: "User updated!",
-            user: user,
-          });
-        }
-      })
+      .then((user) =>
+        Thought.updateMany({
+          username: user.username
+        }, {
+          $set: {
+            username: req.body.username
+          }
+        }, )
+      )
+      .then(() =>
+        User.findOneAndUpdate({
+          _id: req.params.userId
+        }, {
+          $set: req.body
+        }, {
+          runValidators: true,
+          new: true
+        })
+      )
+      .then((user) =>
+        !user ?
+        res.status(404).json({
+          message: 'No user exists!'
+        }) :
+        res.json(user)
+      )
       .catch((err) => {
         res.status(500).json(err);
       });
   },
+
 
 
 
@@ -77,9 +90,9 @@ const userController = {
           });
         }
         Thought.deleteMany({
-            username: dbUserData.username
+            username: user.username
           })
-          .then((result) => {
+          .then((user) => {
             res.status(200).json({
               message: "User deleted!",
             });
