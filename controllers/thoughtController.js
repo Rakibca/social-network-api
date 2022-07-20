@@ -18,16 +18,17 @@ const thoughtController = {
   getSingleThought(req, res) {
     try {
       Thought.findOne({
-          _id: req.params.id
+          _id: req.params.thoughtId
         })
-        .then((thoughtData) => {
-          !thoughtData
-            ?
-            res.status(404).json({
-              message: "No thought exists!"
-            }) :
-            res.json(thoughtData);
-        })
+        .populate('reactions')
+        .select('-__v')
+        .then((thoughtData) =>
+          !thoughtData ?
+          res.status(404).json({
+            message: "No thought exists!"
+          }) :
+          res.json(thoughtData)
+        )
     } catch (err) {
       res.status(400).json(err);
     }
@@ -80,14 +81,25 @@ const thoughtController = {
 
   deleteThought(req, res) {
     try {
-      Thought.findOneAndDelete({
-          _id: req.params.id
+      Thought.findByIdAndRemove({
+          _id: req.params.thoughtId
         })
         .then((thoughtData) =>
           !thoughtData ?
           res.status(404).json({
             message: "No thought exists!"
           }) :
+          User.findOneAndUpdate({
+            thoughts: req.params.thoughtId
+          }, {
+            $pull: {
+              thoughts: req.params.thoughtId
+            }
+          }, {
+            new: true
+          })
+        )
+        .then((thoughtData) =>
           res.json(thoughtData)
         )
     } catch (err) {
@@ -105,8 +117,8 @@ const thoughtController = {
       Thought.findOneAndUpdate({
           _id: req.params.thoughtId
         }, {
-          $push: {
-            reactions: req.params.reactionId
+          $addToSet: {
+            reactions: req.body
           }
         }, {
           runValidators: true,
@@ -126,28 +138,38 @@ const thoughtController = {
 
 
   deleteReaction(req, res) {
-    Thought.findOneAndDelete({
-        _id: req.params.reactionId
-      })
-      .then((reaction) =>
-        !reaction ?
-        res.status(404).json({
-          message: 'No reaction with that ID'
-        }) :
-        Thought.findOneAndUpdate({
-          reactions: req.params.reactionId
+    try {
+      Thought.findOneAndUpdate({
+          _id: req.params.thoughtId
         }, {
           $pull: {
-            reaction: req.params.reactionId
+            reactions: {
+              reactionId: req.params.reactionId
+            }
           }
         }, {
-          new: true
+          true: true,
+          runValidators: true
         })
-      )
-      .then(() => res.json({
-        message: 'Reaction deleted!'
-      }))
-      .catch((err) => res.status(500).json(err));
+        .then((reactionData) =>
+          !reactionData ?
+          res.status(404).json({
+            message: "No reaction exists!"
+          }) :
+          Thought.findOneAndUpdate({
+            reactions: req.params.reactionId
+          }, {
+            $pull: {
+              reaction: req.params.reactionId
+            }
+          }, {
+            new: true
+          })
+        )
+      res.json(reactionData)
+    } catch (err) {
+      res.status(400).json(err);
+    }
   },
 };
 
